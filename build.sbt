@@ -52,6 +52,53 @@ lazy val docs = project
   )
   .dependsOn(catsJVM, coreJVM, enumeratumJVM, libra, refinedJVM, scalazJVM, shapelessJVM, java8)
 
+lazy val scala3root = project
+  .aggregate(
+    catsJVM,
+    catsLawsJVM,
+    coreJVM,
+    lawsJVM,
+    refinedJVM,
+    refinedLawsJVM,
+    scalazJVM,
+    scalazLawsJVM
+  )
+
+val scala3settings = Def.settings(
+  scalaVersion                        := "3.3.5",
+  ThisBuild / wartremoverCrossVersion := CrossVersion.binary,
+  Seq(Compile, Test).map { c =>
+    c / unmanagedSourceDirectories ++= {
+      scalaBinaryVersion.value match {
+        case "2.13" | "3" =>
+          val base = crossProjectBaseDirectory.?.value.fold(baseDirectory.value)(_ / "shared")
+          Seq(
+            base / "src" / Defaults.nameForSrc(c.name) / "scala-2.13+"
+          )
+        case _ =>
+          Nil
+      }
+    }
+  },
+  conflictWarning := {
+    if(scalaBinaryVersion.value == "3") {
+      ConflictWarning("warn", Level.Warn, false)
+    } else {
+      conflictWarning.value
+    }
+  },
+  libraryDependencies := {
+    scalaBinaryVersion.value match {
+      case "3" =>
+        libraryDependencies.value.filterNot(_.name == "scala-reflect")
+      case _ =>
+        libraryDependencies.value
+    }
+  },
+  scalacOptions                     := Nil,
+  Compile / compile / scalacOptions := Nil
+)
+
 // - core projects -----------------------------------------------------------------------------------------------------
 // ---------------------------------------------------------------------------------------------------------------------
 lazy val core = kantanCrossProject("core")
@@ -61,7 +108,7 @@ lazy val core = kantanCrossProject("core")
       "org.scala-lang.modules" %%% "scala-collection-compat" % Versions.collectionCompat % Test,
       "org.scalatest"          %%% "scalatest"               % Versions.scalatest        % Test
     ),
-    scalacOptions += "-Wconf:origin=scala.collection.compat.*:silent"
+    scala3settings
   )
   .enablePlugins(PublishedPlugin)
   .laws("laws")
@@ -75,6 +122,7 @@ lazy val laws = kantanCrossProject("laws")
   .enablePlugins(BoilerplatePlugin, PublishedPlugin)
   .dependsOn(core)
   .settings(
+    scala3settings,
     libraryDependencies ++= Seq(
       "org.scalacheck" %%% "scalacheck"           % Versions.scalacheck,
       "org.scalatest"  %%% "scalatest"            % Versions.scalatest,
@@ -93,6 +141,7 @@ lazy val cats = kantanCrossProject("cats")
   .enablePlugins(PublishedPlugin)
   .dependsOn(core)
   .settings(
+    scala3settings,
     libraryDependencies ++= Seq(
       "org.typelevel" %%% "cats-core" % Versions.cats,
       "org.scalatest" %%% "scalatest" % Versions.scalatest % Test
@@ -109,6 +158,7 @@ lazy val catsLaws = kantanCrossProject("cats-laws")
   .enablePlugins(PublishedPlugin)
   .dependsOn(core, laws, cats)
   .settings(
+    scala3settings,
     libraryDependencies += "org.typelevel" %%% "cats-laws" % Versions.cats
   )
 
@@ -125,6 +175,7 @@ lazy val java8 = Project(id = "java8", base = file("java8/core"))
   .enablePlugins(PublishedPlugin)
   .dependsOn(coreJVM)
   .settings(
+    scala3settings,
     libraryDependencies ++= Seq(
       "org.scalatest" %% "scalatest" % Versions.scalatest % "test"
     )
@@ -139,6 +190,7 @@ lazy val java8Laws = Project(id = "java8-laws", base = file("java8/laws"))
   .enablePlugins(PublishedPlugin)
   .dependsOn(coreJVM, lawsJVM, java8)
   .settings(
+    scala3settings,
     libraryDependencies ++= Seq(
       "org.scala-lang.modules" %% "scala-collection-compat" % Versions.collectionCompat
     )
@@ -152,6 +204,7 @@ lazy val scalaz = kantanCrossProject("scalaz")
   .enablePlugins(PublishedPlugin)
   .dependsOn(core)
   .settings(
+    scala3settings,
     libraryDependencies ++= Seq(
       "org.scalaz"    %%% "scalaz-core" % Versions.scalaz,
       "org.scalatest" %%% "scalatest"   % Versions.scalatest % Test
@@ -168,6 +221,7 @@ lazy val scalazLaws = kantanCrossProject("scalaz-laws")
   .enablePlugins(PublishedPlugin)
   .dependsOn(core, laws, scalaz)
   .settings(
+    scala3settings,
     libraryDependencies ++= Seq(
       "org.scalaz"    %%% "scalaz-core"               % Versions.scalaz,
       "org.scalaz"    %%% "scalaz-scalacheck-binding" % (Versions.scalaz),
@@ -186,6 +240,7 @@ lazy val refined = kantanCrossProject("refined")
   .enablePlugins(PublishedPlugin)
   .dependsOn(core)
   .settings(
+    scala3settings,
     libraryDependencies ++= Seq(
       "eu.timepit"    %%% "refined"   % Versions.refined,
       "org.scalatest" %%% "scalatest" % Versions.scalatest % Test
@@ -198,6 +253,7 @@ lazy val refinedJS  = refined.js
 
 lazy val refinedLaws = kantanCrossProject("refined-laws")
   .in(file("refined/laws"))
+  .settings(scala3settings)
   .settings(moduleName := "kantan.codecs-refined-laws")
   .settings(libraryDependencies += "eu.timepit" %%% "refined-scalacheck" % Versions.refined)
   .enablePlugins(PublishedPlugin)
@@ -214,6 +270,8 @@ lazy val enumeratum = kantanCrossProject("enumeratum")
   .enablePlugins(PublishedPlugin)
   .dependsOn(core)
   .settings(
+    scala3settings,
+    scalacOptions += "-Yretain-trees",
     libraryDependencies ++= Seq(
       "com.beachape"  %%% "enumeratum" % Versions.enumeratum,
       "org.scalatest" %%% "scalatest"  % Versions.scalatest % Test
@@ -227,6 +285,8 @@ lazy val enumeratumJS  = enumeratum.js
 lazy val enumeratumLaws = kantanCrossProject("enumeratum-laws")
   .in(file("enumeratum/laws"))
   .settings(moduleName := "kantan.codecs-enumeratum-laws")
+  .settings(scala3settings)
+  .settings(scalacOptions += "-Yretain-trees")
   .settings(libraryDependencies += "com.beachape" %%% "enumeratum-scalacheck" % Versions.enumeratumScalacheck)
   .enablePlugins(PublishedPlugin)
   .dependsOn(core, laws, enumeratum)
@@ -244,6 +304,7 @@ lazy val libra = Project(id = "libra", base = file("libra/core"))
   .enablePlugins(PublishedPlugin)
   .dependsOn(coreJVM)
   .settings(
+    scala3settings,
     libraryDependencies ++= Seq(
       "com.github.to-ithaca" %% "libra"     % Versions.libra,
       "org.scalatest"        %% "scalatest" % Versions.scalatest % Test
@@ -253,6 +314,7 @@ lazy val libra = Project(id = "libra", base = file("libra/core"))
 
 lazy val libraLaws = Project(id = "libra-laws", base = file("libra/laws"))
   .settings(
+    scala3settings,
     moduleName := "kantan.codecs-libra-laws",
     name       := "libra-laws"
   )
@@ -267,8 +329,9 @@ lazy val shapeless = kantanCrossProject("shapeless")
   .enablePlugins(PublishedPlugin)
   .dependsOn(core)
   .settings(
+    scala3settings,
     libraryDependencies ++= Seq(
-      "com.chuusai"   %%% "shapeless" % Versions.shapeless,
+      "com.chuusai"   %%% "shapeless" % Versions.shapeless cross CrossVersion.for3Use2_13,
       "org.scalatest" %%% "scalatest" % Versions.scalatest % Test
     )
   )
@@ -281,9 +344,10 @@ lazy val shapelessLaws = kantanCrossProject("shapeless-laws")
   .in(file("shapeless/laws"))
   .settings(moduleName := "kantan.codecs-shapeless-laws")
   .settings(
+    scala3settings,
     libraryDependencies +=
       "com.github.alexarchambault" %%% "scalacheck-shapeless_1.18" %
-        Versions.scalacheckShapeless
+        Versions.scalacheckShapeless cross CrossVersion.for3Use2_13
   )
   .enablePlugins(PublishedPlugin)
   .dependsOn(core, laws, shapeless)
