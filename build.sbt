@@ -52,6 +52,42 @@ lazy val docs = project
   )
   .dependsOn(catsJVM, coreJVM, enumeratumJVM, libra, refinedJVM, scalazJVM, shapelessJVM, java8)
 
+lazy val scala3root = project
+  .aggregate(
+    catsJVM,
+    catsJS,
+    catsLawsJVM,
+    catsLawsJS,
+    coreJVM,
+    coreJS,
+    enumeratumJVM,
+    enumeratumJS,
+    enumeratumLawsJVM,
+    enumeratumLawsJS,
+    lawsJVM,
+    lawsJS,
+    refinedJVM,
+    refinedJS,
+    refinedLawsJVM,
+    refinedLawsJS,
+    scalazJVM,
+    scalazJS,
+    scalazLawsJVM,
+    scalazLawsJS
+  )
+
+val scala3settings = Def.settings(
+  ThisBuild / wartremoverCrossVersion := CrossVersion.binary,
+  scalacOptions ++= {
+    if((scalaBinaryVersion.value == "3") && crossProjectPlatform.?.value.contains(JSPlatform)) {
+      Seq("-scalajs")
+    } else {
+      Nil
+    }
+  },
+  crossScalaVersions := ("3.3.5" +: crossScalaVersions.value)
+)
+
 // - core projects -----------------------------------------------------------------------------------------------------
 // ---------------------------------------------------------------------------------------------------------------------
 lazy val core = kantanCrossProject("core")
@@ -63,6 +99,7 @@ lazy val core = kantanCrossProject("core")
     ),
     scalacOptions += "-Wconf:origin=scala.collection.compat.*:silent"
   )
+  .settings(scala3settings)
   .enablePlugins(PublishedPlugin)
   .laws("laws")
 
@@ -81,6 +118,7 @@ lazy val laws = kantanCrossProject("laws")
       "org.typelevel"  %%% "discipline-scalatest" % Versions.disciplineScalatest
     )
   )
+  .settings(scala3settings)
 
 lazy val lawsJVM = laws.jvm
 lazy val lawsJS  = laws.js
@@ -98,6 +136,7 @@ lazy val cats = kantanCrossProject("cats")
       "org.scalatest" %%% "scalatest" % Versions.scalatest % Test
     )
   )
+  .settings(scala3settings)
   .laws("cats-laws")
 
 lazy val catsJVM = cats.jvm
@@ -111,6 +150,7 @@ lazy val catsLaws = kantanCrossProject("cats-laws")
   .settings(
     libraryDependencies += "org.typelevel" %%% "cats-laws" % Versions.cats
   )
+  .settings(scala3settings)
 
 lazy val catsLawsJVM = catsLaws.jvm
 lazy val catsLawsJS  = catsLaws.js
@@ -157,6 +197,7 @@ lazy val scalaz = kantanCrossProject("scalaz")
       "org.scalatest" %%% "scalatest"   % Versions.scalatest % Test
     )
   )
+  .settings(scala3settings)
   .laws("scalaz-laws")
 
 lazy val scalazJVM = scalaz.jvm
@@ -174,6 +215,7 @@ lazy val scalazLaws = kantanCrossProject("scalaz-laws")
       "org.scalatest" %%% "scalatest"                 % Versions.scalatest % "optional"
     )
   )
+  .settings(scala3settings)
 
 lazy val scalazLawsJVM = scalazLaws.jvm
 lazy val scalazLawsJS  = scalazLaws.js
@@ -191,6 +233,7 @@ lazy val refined = kantanCrossProject("refined")
       "org.scalatest" %%% "scalatest" % Versions.scalatest % Test
     )
   )
+  .settings(scala3settings)
   .laws("refined-laws")
 
 lazy val refinedJVM = refined.jvm
@@ -200,6 +243,7 @@ lazy val refinedLaws = kantanCrossProject("refined-laws")
   .in(file("refined/laws"))
   .settings(moduleName := "kantan.codecs-refined-laws")
   .settings(libraryDependencies += "eu.timepit" %%% "refined-scalacheck" % Versions.refined)
+  .settings(scala3settings)
   .enablePlugins(PublishedPlugin)
   .dependsOn(core, laws, refined)
 
@@ -219,6 +263,7 @@ lazy val enumeratum = kantanCrossProject("enumeratum")
       "org.scalatest" %%% "scalatest"  % Versions.scalatest % Test
     )
   )
+  .settings(scala3settings)
   .laws("enumeratum-laws")
 
 lazy val enumeratumJVM = enumeratum.jvm
@@ -228,6 +273,18 @@ lazy val enumeratumLaws = kantanCrossProject("enumeratum-laws")
   .in(file("enumeratum/laws"))
   .settings(moduleName := "kantan.codecs-enumeratum-laws")
   .settings(libraryDependencies += "com.beachape" %%% "enumeratum-scalacheck" % Versions.enumeratumScalacheck)
+  .settings(scala3settings)
+  .settings(
+    Compile / compile / scalacOptions ++= {
+      scalaBinaryVersion.value match {
+        case "3" =>
+          // https://github.com/lloydmeta/enumeratum/blob/c76f9487bc86b5fc7/README.md?plain=1#L28
+          Seq("-Yretain-trees")
+        case _ =>
+          Nil
+      }
+    }
+  )
   .enablePlugins(PublishedPlugin)
   .dependsOn(core, laws, enumeratum)
 

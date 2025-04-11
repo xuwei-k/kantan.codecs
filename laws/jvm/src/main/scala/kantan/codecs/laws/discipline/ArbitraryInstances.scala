@@ -30,6 +30,7 @@ import java.net.URL
 import java.nio.file.AccessMode
 import java.nio.file.Path
 
+@SuppressWarnings(Array("org.wartremover.warts.ToString"))
 trait ArbitraryInstances extends CommonArbitraryInstances {
   // This is just a sample java enum.
   implicit val arbAccessMode: Arbitrary[AccessMode] =

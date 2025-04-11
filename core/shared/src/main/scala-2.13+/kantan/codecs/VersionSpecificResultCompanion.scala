@@ -19,6 +19,7 @@ package kantan.codecs
 import scala.collection.BuildFrom
 import scala.collection.mutable
 
+@SuppressWarnings(Array("org.wartremover.warts.MutableDataStructures"))
 object VersionSpecificResultCompanion {
   trait Simple[F] {
 

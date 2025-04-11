@@ -122,6 +122,7 @@ trait CommonArbitraryInstances extends ArbitraryArities {
   // scale is higher than MAX_INT.
   // Note that this isn't actually an issue with ScalaCheck but with Scala itself, and is(?) fixed in Scala 2.12:
   // https://github.com/scala/scala/pull/4320
+  @SuppressWarnings(Array("org.wartremover.warts.ToString"))
   implicit lazy val arbBigDecimal: Arbitrary[BigDecimal] = {
     import java.math.MathContext._
     val mcGen = Gen.oneOf(DECIMAL32, DECIMAL64, DECIMAL128)

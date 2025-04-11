@@ -22,6 +22,7 @@ import scala.reflect.ClassTag
 import scala.util.matching.Regex
 
 /** Defines default instances for [[StringEncoder]] and [[StringDecoder]]. */
+@SuppressWarnings(Array("org.wartremover.warts.ToString"))
 object codecs extends PlatformSpecificInstances {
 
   /** Defines a [[StringCodec]] instance for Java enumerations.

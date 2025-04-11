@@ -31,6 +31,7 @@ trait ArbitraryInstances
     extends BooleanInstances with CharInstances with GenericInstances with NumericInstances with RefTypeInstances
     with StringInstances {
 
+  @SuppressWarnings(Array("org.wartremover.warts.ToString"))
   implicit val arbLegalPositiveIntString: Arbitrary[LegalString[Int Refined Positive]] =
     arbLegalValue(_.toString)
   // format: off

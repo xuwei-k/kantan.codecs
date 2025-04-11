@@ -25,6 +25,7 @@ import java.text.DateFormat
 import java.util.Date
 
 /** JVM-specific codec instances. */
+@SuppressWarnings(Array("org.wartremover.warts.ToString"))
 trait PlatformSpecificInstances {
 
   /** Defines a [[StringCodec]] instance for `java.net.URL`.
