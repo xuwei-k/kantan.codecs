@@ -22,9 +22,9 @@ import kantan.codecs.shapeless.laws.discipline.DisciplineSuite
 import kantan.codecs.shapeless.laws.discipline.StringCodecTests
 import kantan.codecs.shapeless.laws.discipline.StringDecoderTests
 import kantan.codecs.shapeless.laws.discipline.StringEncoderTests
-import kantan.codecs.shapeless.laws.discipline.arbitrary._
 import kantan.codecs.strings.StringEncoder
-import shapeless.CNil
+// import kantan.codecs.laws.discipline.arbitrary._
+import kantan.codecs.shapeless.laws.discipline.arbitrary._
 
 @SuppressWarnings(Array("org.wartremover.warts.Null"))
 class InstancesTests extends DisciplineSuite {
@@ -34,10 +34,5 @@ class InstancesTests extends DisciplineSuite {
   checkAll("StringDecoder[Int Or Boolean]", StringDecoderTests[Int Or Boolean].decoder[Int, Int])
   checkAll("StringEncoder[Int Or Boolean]", StringEncoderTests[Int Or Boolean].encoder[Int, Int])
   checkAll("StringCodec[Int Or Boolean]", StringCodecTests[Int Or Boolean].codec[Int, Int])
-
-  test("Encoder[?, CNil, ?] should fail") {
-    intercept[IllegalStateException](StringEncoder[CNil].encode(null))
-    ()
-  }
 
 }

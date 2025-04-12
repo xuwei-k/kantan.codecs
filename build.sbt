@@ -74,6 +74,10 @@ lazy val scala3root = project
     scalazJS,
     scalazLawsJVM,
     scalazLawsJS,
+    shapelessJVM,
+    shapelessJS,
+    shapelessLawsJVM,
+    shapelessLawsJS,
     java8,
     java8Laws
   )
@@ -329,10 +333,20 @@ lazy val shapeless = kantanCrossProject("shapeless")
   .dependsOn(core)
   .settings(
     libraryDependencies ++= Seq(
-      "com.chuusai"   %%% "shapeless" % Versions.shapeless,
       "org.scalatest" %%% "scalatest" % Versions.scalatest % Test
-    )
+    ),
+    libraryDependencies ++= {
+      scalaBinaryVersion.value match {
+        case "3" =>
+          Nil
+        case _ =>
+          Seq(
+            "com.chuusai" %%% "shapeless" % Versions.shapeless
+          )
+      }
+    }
   )
+  .settings(scala3settings)
   .laws("shapeless-laws")
 
 lazy val shapelessJVM = shapeless.jvm
@@ -342,10 +356,19 @@ lazy val shapelessLaws = kantanCrossProject("shapeless-laws")
   .in(file("shapeless/laws"))
   .settings(moduleName := "kantan.codecs-shapeless-laws")
   .settings(
-    libraryDependencies +=
-      "com.github.alexarchambault" %%% "scalacheck-shapeless_1.18" %
-        Versions.scalacheckShapeless
+    libraryDependencies ++= {
+      scalaBinaryVersion.value match {
+        case "3" =>
+          Nil
+        case _ =>
+          Seq(
+            "com.github.alexarchambault" %%% "scalacheck-shapeless_1.18" %
+              Versions.scalacheckShapeless
+          )
+      }
+    }
   )
+  .settings(scala3settings)
   .enablePlugins(PublishedPlugin)
   .dependsOn(core, laws, shapeless)
 
