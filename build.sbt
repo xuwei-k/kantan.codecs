@@ -73,7 +73,9 @@ lazy val scala3root = project
     scalazJVM,
     scalazJS,
     scalazLawsJVM,
-    scalazLawsJS
+    scalazLawsJS,
+    java8,
+    java8Laws
   )
 
 val scala3settings = Def.settings(
@@ -169,6 +171,7 @@ lazy val java8 = Project(id = "java8", base = file("java8/core"))
       "org.scalatest" %% "scalatest" % Versions.scalatest % "test"
     )
   )
+  .settings(scala3settings)
   .laws("java8-laws")
 
 lazy val java8Laws = Project(id = "java8-laws", base = file("java8/laws"))
@@ -183,6 +186,7 @@ lazy val java8Laws = Project(id = "java8-laws", base = file("java8/laws"))
       "org.scala-lang.modules" %% "scala-collection-compat" % Versions.collectionCompat
     )
   )
+  .settings(scala3settings)
 
 // - scalaz projects ---------------------------------------------------------------------------------------------------
 // ---------------------------------------------------------------------------------------------------------------------
